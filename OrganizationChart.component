@@ -1,0 +1,55 @@
+<!-- 
+   OrganizationChart.component
+   This component generates the necessary JavaScript and HTML
+   for displaying a Google Visualization Organization Chart
+   Representing users in the current Salesforce Org.
+   If warrented, this component may be reused throughout multiple VF pages.
+   Organization Chart / Google Visualization API CloudSpokes challenge
+   Author: James Loghry (james.loghry@edlconsulting.com) Twitter: dancinllama
+-->
+<apex:component controller="UserRoleController">
+  <!--  The component may be reused on multiple VF pages if warranted -->
+  <script type='text/javascript' src='https://www.google.com/jsapi'></script>
+  <script type='text/javascript'>
+    google.load('visualization', '1', {packages:['orgchart']});
+    google.setOnLoadCallback(drawChart);
+    function drawChart() {
+      var data = new google.visualization.DataTable();
+      data.addColumn('string', 'Name');
+      data.addColumn('string', 'Manager');
+      data.addColumn('string', 'ToolTip');
+      
+      //Use visualforce tags to iterate through list of users and generate chart rows
+      <apex:repeat var="role" value="{!roles}">
+        <!-- Output roles with no users assigned -->
+        <apex:outputText rendered="{!IF(role.Users.size==0,true,false)}">
+          data.addRow([
+            {
+              v:'{!role.Id}',
+              f:'<a href="../{!role.Id}" style="text-decoration: none"><div style="color:red;font-style:italic">{!role.Name}</div></a>'
+            },
+            '{!role.ParentRoleId}',
+            '{!role.Name}'
+          ]);
+        </apex:outputText>
+        
+        <!-- Output roles with users assigned -->
+        <apex:repeat var="user" value="{!role.Users}">
+          data.addRow([
+            {
+              v:'{!role.Id}',
+              f:'<a href="{!URLFOR(user.Id)}" style="text-decoration: none;">{!user.Name}<div style="color:#006699;font-style:italic">{!role.Name}</div><br /><img src="{!user.SmallPhotoUrl}" /></a>'
+            },
+            '{!role.ParentRoleId}',
+            '{!role.Name}'
+          ]);
+        </apex:repeat>
+      </apex:repeat>
+      
+      var chart = new google.visualization.OrgChart(document.getElementById('chart_div'));
+      chart.draw(data, {allowHtml:true});
+    }
+  </script>
+  <!-- Displaying the google visualization api chart -->
+  <div id='chart_div'></div>
+</apex:component>
